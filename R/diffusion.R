@@ -14,5 +14,9 @@
 #'
 #' @export
 run_diffusion <- function(data) {
-    .Call("c_run_diffusion", data, PACKAGE="cDiffusion")
+
+    data_matrix <- as.matrix(data)
+    data_matrix <- t(as.matrix(data))
+    storage.mode(data_matrix) <- "double"
+    .Call("c_run_diffusion", data_matrix, PACKAGE="cDiffusion")
 }
