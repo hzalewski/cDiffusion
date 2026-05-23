@@ -4,10 +4,12 @@
 \alias{run_diffusion}
 \title{Run diffusion map}
 \usage{
-run_diffusion(data)
+run_diffusion(data, sigma = 1)
 }
 \arguments{
 \item{data}{numeric matrix}
+
+\item{sigma}{numeric scalar for Gaussian kernel (default 1.0)}
 }
 \value{
 returns a numeric matrix
