@@ -1,0 +1,14 @@
+Package: cDiffusion
+Version: 0.1
+Date: 2026-05-23
+Title: Diffusion Maps implementation using R C API 
+Description: No description yet
+Authors@R: c(person("Hubert", "Zalewski", role = c("aut", "cre"),
+                     email = "Hubert.Zalewski2@pw.edu.pl"))
+Author: Hubert Zalewski [aut, cre]
+Maintainer: Hubert Zalewski <Hubert.Zalewski2@pw.edu.pl>
+Depends: 
+Suggests:
+License: AGPL (>= 3)
+RoxygenNote: 7.3.3
+Encoding: UTF-8
