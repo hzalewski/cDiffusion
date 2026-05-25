@@ -49,3 +49,18 @@ void normalize_matrix(double* dist, int n) {
 
     free(sums);
 }
+
+void multiply_matrix_vector(double* matrix, double* vector, double* result, int n) {
+    #pragma omp parallel for schedule(static)
+
+    for(int i = 0; i < n; i++) {
+
+        double local_sum = 0.0;
+
+        for(int j = 0; j < n; j++) {
+            
+            local_sum += matrix[i + j*n] * vector[j];
+        }
+        result[i] = local_sum;
+    }
+}

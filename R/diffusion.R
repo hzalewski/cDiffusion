@@ -19,5 +19,5 @@ run_diffusion <- function(data, sigma = 1.0) {
     data_matrix <- as.matrix(data)
     data_matrix <- t(as.matrix(data))
     storage.mode(data_matrix) <- "double"
-    .Call("c_run_diffusion", data_matrix, as.numeric(sigma), PACKAGE="cDiffusion")
+    .Call("c_run_diffusion", data_matrix, as.numeric(sigma), as.integer(k), PACKAGE="cDiffusion")
 }
