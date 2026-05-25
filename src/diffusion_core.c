@@ -25,7 +25,7 @@ void compute_gaussian_kernel(double* data, double* dist, int n, int p, double si
     }
 }
 
-void normalize_markov(double* dist, int n) {
+void normalize_matrix(double* dist, int n) {
 
     double* sums = (double*) malloc(n * sizeof(double));
     

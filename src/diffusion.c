@@ -27,7 +27,7 @@ SEXP c_run_diffusion(SEXP r_data, SEXP r_sigma)
 
     compute_gaussian_kernel(data, dist, n, p, sigma);
 
-    normalize_markov(dist, n);
+    normalize_matrix(dist, n);
     
     UNPROTECT(1);
     return r_dist;
