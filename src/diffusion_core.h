@@ -1,9 +1,9 @@
 #ifndef DIFFUSION_CORE_H
 #define DIFFUSION_CORE_H
 
-void compute_gaussian_kernel(double* data, double* dist, int n, int p, double sigma);
-void normalize_matrix(double* dist, int n);
-void multiply_matrix_vector(double* matrix, double* vector, double* result, int n);
-
+void apply_gauss(double *data, double *dist, int n, int p, double sigma);
+void matrix_normalization(double *dist, int n);
+void mvp(double *matrix, double *vector, double *result, int n);
+int eigen(double *matrix, int n, double *eigenvalues, double *eigenvectors);
 
 #endif
