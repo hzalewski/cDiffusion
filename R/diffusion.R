@@ -1,20 +1,31 @@
-#' @useDynLib cDiffusion
+#' @useDynLib cDiffusion, .registration = TRUE
+#' @keywords internal
 "_PACKAGE"
 
-#' @title
-#' Run diffusion map
+
+#' @title Run diffusion map
 #'
 #' @description
-#' Main package function.
+#' Main package function to perform non-linear dimensionality reduction using 
+#' Randomized Singular Value Decomposition (rSVD) and Markov matrix normalization.
 #'
-#' @param data numeric matrix
-#' @param sigma numeric scalar for Gaussian kernel (default 1.0)
-#'
+#' @param data Numeric matrix containing the input data.
+#' @param sigma Numeric scalar for the Gaussian kernel bandwidth (default 1.0).
+#' @param k Integer. Number of diffusion dimensions to return (default 2).
+#' @param oversampling Integer. Parameter for Randomized SVD algorithm which states how many additional dimensions are used, improving accuracy of results and numerical stability (default 100).
+#' @param n_iter Integer. Number of subspace iterations in Randomized SVD (default 10).
+#' 
 #' @return
-#' returns a numeric matrix
+#' Returns an object of S3 class \code{diffmap}, containing:
+#' \itemize{
+#'   \item \code{coordinates} - A numeric matrix of the reduced dimensions.
+#'   \item \code{eigenvalues} - A numeric vector of eigenvalues.
+#'   \item \code{sigma} - The Gaussian kernel parameter used.
+#'   \item \code{data_dim} - Dimensions of the original input data.
+#' }
 #'
 #' @export
-run_diffusion <- function(data, sigma = 1.0, k = 2, oversampling = 5, n_iter = 300) {
+run_diffusion <- function(data, sigma = 1.0, k = 2, oversampling = 5, n_iter = 100) {
 
     data_matrix <- t(as.matrix(data))
     storage.mode(data_matrix) <- "double"

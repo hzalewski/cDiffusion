@@ -1,5 +1,5 @@
 Package: cDiffusion
-Version: 0.1
+Version: 0.1.0
 Date: 2026-05-23
 Title: Diffusion Maps implementation using R C API 
 Description: No description yet
