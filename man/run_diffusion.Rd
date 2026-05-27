@@ -4,7 +4,7 @@
 \alias{run_diffusion}
 \title{Run diffusion map}
 \usage{
-run_diffusion(data, sigma = 1, k = 2)
+run_diffusion(data, sigma = 1, k = 2, oversampling = 5, n_iter = 300)
 }
 \arguments{
 \item{data}{numeric matrix}

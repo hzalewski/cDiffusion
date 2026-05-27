@@ -3,59 +3,50 @@
 #include <Rinternals.h>
 #include "diffusion_core.h"
 
-SEXP c_run_diffusion(SEXP r_data, SEXP r_sigma, SEXP r_k)
+SEXP c_run_diffusion(SEXP r_data, SEXP r_sigma, SEXP r_m, SEXP r_n_iter)
 {
-
-    if (!Rf_isReal(r_data))
-        Rf_error("data must be numeric");
-    if (!Rf_isMatrix(r_data))
-        Rf_error("Data must be a matrix");
-
-    if (!Rf_isReal(r_sigma))
-        Rf_error("sigma must be numeric");
-    if (Rf_length(r_sigma) != 1)
-        Rf_error("sigma must be a scalar");
-
-    if (!Rf_isInteger(r_k) && !Rf_isReal(r_k))
-        Rf_error("number of dimensions (k) must be numeric");
-    int k = Rf_asInteger(r_k);
-    if (k < 1)
-        Rf_error("number of dimensions (k) must be greater than zero");
-
-    double sigma = Rf_asReal(r_sigma);
-    if (sigma <= 0.0)
-        Rf_error("sigma must be greater than zero");
-
     int p = Rf_nrows(r_data);
     int n = Rf_ncols(r_data);
+    double sigma = Rf_asReal(r_sigma);
+    int m = Rf_asInteger(r_m);           
+    int n_iter = Rf_asInteger(r_n_iter); 
 
-    SEXP r_dist = PROTECT(Rf_allocMatrix(REALSXP, n, n));
-    double *data = REAL(r_data);
-    double *dist = REAL(r_dist);
+  
+    SEXP r_dist = PROTECT(Rf_allocMatrix(REALSXP, n, n)); 
+    SEXP r_X = PROTECT(Rf_allocMatrix(REALSXP, n, m));    
+    
+  
+    SEXP r_D_sqrt = PROTECT(Rf_allocVector(REALSXP, n));  
+    
+    double* data = REAL(r_data);
+    double* dist = REAL(r_dist);
+    double* X = REAL(r_X);
+    double* D_sqrt = REAL(r_D_sqrt);
 
+  
     apply_gauss(data, dist, n, p, sigma);
+    
+   
+    matrix_normalization(dist, D_sqrt, n);
 
-    matrix_normalization(dist, n);
+   
+    random_matrix(X, n, m);
 
-    SEXP r_eigenvalues = PROTECT(Rf_allocVector(REALSXP, n));
-    SEXP r_eigenvectors = PROTECT(Rf_allocMatrix(REALSXP, n, n));
+    SEXP r_eigvals = PROTECT(Rf_allocVector(REALSXP, m));
+    SEXP r_eigvecs = PROTECT(Rf_allocMatrix(REALSXP, n, m));
 
-    int info = eigen(dist, n, REAL(r_eigenvalues ), REAL(r_eigenvectors));
+    randomized_svd(dist, X, REAL(r_eigvecs), REAL(r_eigvals), n, m, n_iter);
 
-    if (info != 0)
-    {
-        Rf_error("LAPACK error: %d", info);
-    }
 
     SEXP r_list = PROTECT(Rf_allocVector(VECSXP, 2));
-    SET_VECTOR_ELT(r_list, 0, r_eigenvalues);
-    SET_VECTOR_ELT(r_list, 1, r_eigenvectors);
-
+    SET_VECTOR_ELT(r_list, 0, r_eigvals);
+    SET_VECTOR_ELT(r_list, 1, r_eigvecs);
+    
     SEXP r_names = PROTECT(Rf_allocVector(STRSXP, 2));
     SET_STRING_ELT(r_names, 0, Rf_mkChar("values"));
     SET_STRING_ELT(r_names, 1, Rf_mkChar("vectors"));
     Rf_setAttrib(r_list, R_NamesSymbol, r_names);
 
-    UNPROTECT(5);
+    UNPROTECT(7);
     return r_list;
 }
