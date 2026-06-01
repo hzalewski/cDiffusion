@@ -1,6 +1,8 @@
 #include "knn.h"
 
 
+
+// Maintaining max-heap, largest distance at the root
 void down_heap(knn_node* heap, int i, int k_neighbors) {
     knn_node v = heap[i];
     
@@ -33,6 +35,7 @@ void build_heap(knn_node* heap, int k_neighbors) {
     }
 }
 
+// inserting and restoring property
 void insert(knn_node* heap, int k_neighbors, int new_idx, double new_dist) {
     if (new_dist < heap[0].dist) {
        

@@ -4,29 +4,36 @@
 \alias{run_diffusion}
 \title{Run diffusion map}
 \usage{
-run_diffusion(data, sigma = 1, k = 2, oversampling = 5, n_iter = 100)
+run_diffusion(
+  data,
+  sigma = 1,
+  k = 2,
+  method = "auto",
+  k_neighbors = 15,
+  oversampling = 20,
+  n_iter = 10
+)
 }
 \arguments{
-\item{data}{Numeric matrix containing the input data.}
+\item{data}{Numeric matrix.}
 
-\item{sigma}{Numeric scalar for the Gaussian kernel bandwidth (default 1.0).}
+\item{sigma}{Numeric. Bandwidth for Gaussian kernel (default 1.0).}
 
 \item{k}{Integer. Number of diffusion dimensions to return (default 2).}
 
-\item{oversampling}{Integer. Parameter for Randomized SVD algorithm which states how many additional dimensions are used, improving accuracy of results and numerical stability (default 100).}
+\item{method}{Character. One of "auto", "dense", "sparse".}
 
-\item{n_iter}{Integer. Number of subspace iterations in Randomized SVD (default 10).}
+\item{k_neighbors}{Integer. Number of neighbors for sparse method (default 15).}
+
+\item{oversampling}{Integer. Dimensions added for stability in rSVD (default 20).}
+
+\item{n_iter}{Integer. Number of subspace iterations in rSVD (default 10).}
 }
 \value{
-Returns an object of S3 class \code{diffmap}, containing:
-\itemize{
-  \item \code{coordinates} - A numeric matrix of the reduced dimensions.
-  \item \code{eigenvalues} - A numeric vector of eigenvalues.
-  \item \code{sigma} - The Gaussian kernel parameter used.
-  \item \code{data_dim} - Dimensions of the original input data.
-}
+A diffmap object
 }
 \description{
-Main package function to perform non-linear dimensionality reduction using 
-Randomized Singular Value Decomposition (rSVD) and Markov matrix normalization.
+Main package function to perform non-linear dimensionality reduction.
+Features automatic method dispatch between dense exact evaluation 
+and highly optimized sparse k-NN evaluation based on dataset size.
 }
