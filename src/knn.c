@@ -1,5 +1,4 @@
-#include "knn.h"
-
+#include "cDiffusion.h"
 
 
 // Maintaining max-heap, largest distance at the root
