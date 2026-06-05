@@ -17,26 +17,59 @@
 #' @param oversampling Integer. Dimensions added for stability in randomized SVD algorithm (default 20).
 #' @param n_iter Integer. Number of subspace iterations in randomized SVD algorithm (default 10).
 #' 
+#' #' @examples
+#' data <- matrix(runif(100), nrow = 20, ncol = 5)
+#' optimal_sigma <- estimate_sigma(dane)
+#' model <- run_diffusion(data, sigma = optimal_sigma, method = "dense")
+#'
+#' @export
+#' 
 #' @return A diffmap object
 #'
 #' @export
 run_diffusion <- function(data, sigma = 1.0, k = 2, method = "auto", k_neighbors = 15, oversampling = 20, n_iter = 10) {
 
 ## maybe default sigma should be estimated instead of 1.0
+## TODO: better default values for oversampling n_iter and k_neighbours especially for sparse method
+## TODO: divide run_diffusion into two differentr functions - sparse and dense since there is a big difference in arguments passed
+## What to do about sigma parameter in sparse method?
+##
+
+
+
+    if (!is.matrix(data) && !is.data.frame(data)) {
+        stop("'data' must be a numeric matrix or a data.frame.")
+    }
+
+    # Transpose to be C - contigous
     data_matrix <- t(as.matrix(data))
     storage.mode(data_matrix) <- "double"
     N <- ncol(data_matrix) 
+
+    if (anyNA(data_matrix)) stop("'data' cannot contain NA or NaN values.")
+    if (max(data_matrix) == Inf || min(data_matrix) == -Inf) stop("'data' cannot contain Infinite values.")
     
     if (method == "auto") {
-        if (N > 2500) {
+        if (N > 10000) {
             method <- "sparse"
-            message("N > 2500. Switching to sparse method.")
+            warning("N > 10000. Switching to sparse method.")
         } else {
             method <- "dense"
         }
     }
+
+     if (method == "dense" && N > 15000) {
+        warning(sprintf("WARNING: Number of observations N=%d is too big for 'dense' method. Switching to memory friendlier method 'sparse'!", N))
+        method <- "sparse"
+    }
     
     m <- as.integer(k + oversampling)
+
+     if (m >= N) {
+        warning("WARNING: Overall number of computed dimensions (k + oversampling) is higher than N. Reducing oversampling.")
+        m <- as.integer(N - 1)
+        if (m <= k) stop("WARNING: N is too small to compute k dimensions.")
+    }
     
    
     if (method == "sparse") {
@@ -47,7 +80,7 @@ run_diffusion <- function(data, sigma = 1.0, k = 2, method = "auto", k_neighbors
                      m, as.integer(n_iter), PACKAGE="cDiffusion")
     }
     
-    
+    # RSVD doesnt guarantee sorted eigenvalues
     idx <- order(res$values, decreasing = TRUE)
     sorted_values <- res$values[idx]
     sorted_vectors <- res$vectors[, idx]
@@ -56,7 +89,7 @@ run_diffusion <- function(data, sigma = 1.0, k = 2, method = "auto", k_neighbors
     diff_coords <- sorted_vectors[, 2:(k+1)]
     diff_vals <- sorted_values[2:(k+1)]
     
-   
+    # diffusion map embedding
     for(i in 1:k) {
         diff_coords[, i] <- diff_coords[, i] * diff_vals[i]
     }
@@ -66,7 +99,7 @@ run_diffusion <- function(data, sigma = 1.0, k = 2, method = "auto", k_neighbors
         eigenvalues = diff_vals,
         sigma = sigma,
         data_dim = dim(data),
-        engine_used = method
+        method = method
     )
     
     class(result) <- "diffmap"
