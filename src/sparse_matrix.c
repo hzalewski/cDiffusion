@@ -45,7 +45,6 @@ void sparse(double *data, int n, int dim, int k_neighbours, double sigma, double
         }
         // adaptive kernel - local sigma is the distance to k-th nearest neighbour 
         local_sigmas[j] = sqrt(heap[0].dist); 
-        if(local_sigmas[j] < 1e-8) local_sigmas[j] = 1e-8;
 
         for (int p = 0; p < k_neighbours; p++) {
             tmp_col[j * k_neighbours + p] = heap[p].idx;
