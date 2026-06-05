@@ -1,9 +1,4 @@
-#include "sparse_matrix.h"
-#include "diffusion_core.h"
-#include "knn.h"
-#include <math.h>
-#include <omp.h>
-#include <stdlib.h>
+#include "cDiffusion.h"
 
 double sq_dist(double *data, int n, int dim, int m1, int m2)
 {
@@ -18,151 +13,155 @@ double sq_dist(double *data, int n, int dim, int m1, int m2)
 
 // Builds a sparse k-NN matrix in CSR (Compressed Sparse Row) format.
 // Uses max-heap for finding k-NN and transforms the matrix to be symmetric (maybe some other way to do it?).
-void sparse(double *data, int n, int dim, int k, double sigma, double **out_data, int **out_indices, int **out_indptr)
+
+// Local sigma works better so is there a point of leaving estimate_sigma
+void sparse(double *data, int n, int dim, int k_neighbours, double sigma, double **out_csr_data, int **out_csr_indices, int **out_csr_indptr)
 {
-    double denom = 2.0 * sigma * sigma;
 
-    // initial k-NN results
-    int *tmp_col = (int *)malloc(n * k * sizeof(int));
-    double *tmp_val = (double *)malloc(n * k * sizeof(double));
+   
+    double *tmp_dist_sq = malloc(n * k_neighbours * sizeof(double)); 
+    double *local_sigmas = malloc(n * sizeof(double));
+    int *tmp_col = malloc(n * k_neighbours * sizeof(int));
 
-    // k-NN for each point and applying kernel
-#pragma omp parallel for schedule(dynamic)
-    for (int j = 0; j < n; j++)
-    {
-        knn_node *heap = (knn_node *)malloc(k * sizeof(knn_node));
+    #pragma omp parallel for schedule(dynamic)
+    for (int j = 0; j < n; j++) {
+        knn_node *heap = (knn_node *)malloc(k_neighbours * sizeof(knn_node));
         int i = 0, filled = 0;
 
-        while (i < n && filled < k)  // First k elements are inserted automatically
-        {
+        while (i < n && filled < k_neighbours) {
             heap[filled].idx = i;
             heap[filled].dist = sq_dist(data, n, dim, j, i);
-            filled++;
-            i++;
+            filled++; i++;
         }
-        build_heap(heap, k); 
+        build_heap(heap, k_neighbours); 
 
-        for (; i < n; i++)    // max distance in heap gets replaced if a closer point gets found
-        {
+        for (; i < n; i++) {
             double d_sq = sq_dist(data, n, dim, j, i);
-            if (d_sq < heap[0].dist)
-            {
+            if (d_sq < heap[0].dist) {
                 heap[0].idx = i;
                 heap[0].dist = d_sq;
-                down_heap(heap, 0, k);
+                down_heap(heap, 0, k_neighbours);
             }
         }
+        // adaptive kernel - local sigma is the distance to k-th nearest neighbour 
+        local_sigmas[j] = sqrt(heap[0].dist); 
+        if(local_sigmas[j] < 1e-8) local_sigmas[j] = 1e-8;
 
-        for (int p = 0; p < k; p++)
-        {
-            tmp_col[j * k + p] = heap[p].idx;
-            tmp_val[j * k + p] = exp(-heap[p].dist / denom);
+        for (int p = 0; p < k_neighbours; p++) {
+            tmp_col[j * k_neighbours + p] = heap[p].idx;
+            tmp_dist_sq[j * k_neighbours + p] = heap[p].dist; 
         }
         free(heap);
     }
 
-    // Count only mutual edges (i->j and j->i) to calculate row pointers
-    *out_indptr = (int *)calloc((n + 1), sizeof(int));
+    *out_csr_indptr = calloc((n + 1), sizeof(int));
 
-#pragma omp parallel for
-    for (int j = 0; j < n; j++)
-    {
-        int valid_edges = 0;
-        for (int p = 0; p < k; p++)
-        {
-            int neighbor = tmp_col[j * k + p];
+    // To create symmetry we add edges in both directions
+    for (int j = 0; j < n; j++) {
+        for (int p = 0; p < k_neighbours; p++) {
+            int neighbor = tmp_col[j * k_neighbours + p];
+
+            (*out_csr_indptr)[j + 1]++; // Edge fron j to neighbour
 
             int is_mutual = 0;
-            for (int m = 0; m < k; m++)
-            {
-                if (tmp_col[neighbor * k + m] == j)
-                {
-                    is_mutual = 1;
-                    break;
+            for (int m = 0; m < k_neighbours; m++) {
+                if (tmp_col[neighbor * k_neighbours + m] == j) {
+                    is_mutual = 1; break;
                 }
             }
-
-            if (is_mutual)
-                valid_edges++;
+            // Space for connection in other direction
+            if (!is_mutual) {
+                (*out_csr_indptr)[neighbor + 1]++;
+            }
         }
-        (*out_indptr)[j + 1] = valid_edges;
-    }
-    // Prefix sum - start of each row in CSR
-    for (int i = 0; i < n; i++)
-    {
-        (*out_indptr)[i + 1] += (*out_indptr)[i];
     }
 
-    int total_edges = (*out_indptr)[n];
-    *out_data = (double *)malloc(total_edges * sizeof(double));
-    *out_indices = (int *)malloc(total_edges * sizeof(int));
+    for (int i = 0; i < n; i++) {
+        (*out_csr_indptr)[i + 1] += (*out_csr_indptr)[i];
+    }
 
+    // Final CSR arrays 
+    int total_edges = (*out_csr_indptr)[n];
+    *out_csr_data = malloc(total_edges * sizeof(double));
+    *out_csr_indices = malloc(total_edges * sizeof(int));
 
-    // Allocating final arrays
-#pragma omp parallel for
-    for (int j = 0; j < n; j++)
-    {
-        int pos = (*out_indptr)[j];
+    // current insertion position for each row
+    int *current_pos = malloc(n * sizeof(int));
+    for (int i = 0; i < n; i++) current_pos[i] = (*out_csr_indptr)[i];
 
-        for (int p = 0; p < k; p++)
-        {
-            int neighbor = tmp_col[j * k + p];
+    for (int j = 0; j < n; j++) {
+        for (int p = 0; p < k_neighbours; p++) {
+            int neighbor = tmp_col[j * k_neighbours + p];
+            double d_sq = tmp_dist_sq[j * k_neighbours + p]; 
+            double weight = exp(-d_sq / (local_sigmas[j] * local_sigmas[neighbor]));
 
+            int pos1;
+            // insert edge
+            pos1 = current_pos[j];
+            current_pos[j]++; 
+            
+            (*out_csr_indices)[pos1] = neighbor;
+            (*out_csr_data)[pos1] = weight;
+
+            // if not mutual insert reverse edge
             int is_mutual = 0;
-            for (int m = 0; m < k; m++)
-            {
-                if (tmp_col[neighbor * k + m] == j)
-                {
-                    is_mutual = 1;
-                    break;
+            for (int m = 0; m < k_neighbours; m++) {
+                if (tmp_col[neighbor * k_neighbours + m] == j) {
+                    is_mutual = 1; break;
                 }
             }
 
-            if (is_mutual)
-            {
-                (*out_indices)[pos] = neighbor;
-                (*out_data)[pos] = tmp_val[j * k + p];
-                pos++;
+            if (!is_mutual) {
+                int pos2;
+
+                pos2 = current_pos[neighbor]; 
+                current_pos[neighbor]++; 
+                
+                (*out_csr_indices)[pos2] = j;
+                (*out_csr_data)[pos2] = weight;
             }
         }
     }
 
     free(tmp_col);
-    free(tmp_val);
+    free(tmp_dist_sq);
+    free(local_sigmas);
+    free(current_pos);
 }
 
-void sparse_multiplication(int n, int m, double *val, int *col, int *row_ptr, double *X, double *Y)
+void sparse_multiplication(int n, int m, double *csr_data, int *csr_indices, int *csr_indptr, double *X, double *Y)
 {
 #pragma omp parallel for schedule(dynamic)
     for (int row = 0; row < n; row++)
     {
-        int start = row_ptr[row];
-        int end = row_ptr[row + 1];
+        int start = csr_indptr[row];
+        int end = csr_indptr[row + 1];
 
         for (int j = 0; j < m; j++)
         {
             double sum = 0.0;
             for (int p = start; p < end; p++)
             {
-                sum += val[p] * X[col[p] + j * n];
+                sum += csr_data[p] * X[csr_indices[p] + j * n]; 
             }
             Y[row + j * n] = sum;
         }
     }
 }
-
-//W_ij = W_ij / (q_i * q_j), then D_i = sqrt(sum_j W_ij), W_ij = W_ij / (D_i * D_j)
-void sparse_normalization(double *val, int *col, int *row_ptr, double *D_sqrt, int n)
+// same logic as in regular matrix (diffusion_core.c)
+void sparse_normalization(double *csr_data, int *csr_indices, int *csr_indptr, double *D_sqrt, int n)
 {
-    double *q_inv = (double *)malloc(n * sizeof(double));
-    double *D_inv = (double *)malloc(n * sizeof(double));
+    double *q_inv = malloc(n * sizeof(double));
+    double *D_inv = malloc(n * sizeof(double));
+
+
 
 #pragma omp parallel for
     for (int i = 0; i < n; i++)
     {
         double sum = 0.0;
-        for (int p = row_ptr[i]; p < row_ptr[i + 1]; p++)
-            sum += val[p];
+        for (int p = csr_indptr[i]; p < csr_indptr[i + 1]; p++)
+            sum += csr_data[p];
         q_inv[i] = 1.0 / sum;
     }
 
@@ -170,9 +169,9 @@ void sparse_normalization(double *val, int *col, int *row_ptr, double *D_sqrt, i
     for (int i = 0; i < n; i++)
     {
         double qi = q_inv[i];
-        for (int p = row_ptr[i]; p < row_ptr[i + 1]; p++)
+        for (int p = csr_indptr[i]; p < csr_indptr[i + 1]; p++)
         {
-            val[p] *= (qi * q_inv[col[p]]);
+            csr_data[p] *= (qi * q_inv[csr_indices[p]]);
         }
     }
 
@@ -180,8 +179,8 @@ void sparse_normalization(double *val, int *col, int *row_ptr, double *D_sqrt, i
     for (int i = 0; i < n; i++)
     {
         double sum = 0.0;
-        for (int p = row_ptr[i]; p < row_ptr[i + 1]; p++)
-            sum += val[p];
+        for (int p = csr_indptr[i]; p < csr_indptr[i + 1]; p++)
+            sum += csr_data[p];
         D_sqrt[i] = sqrt(sum);
         D_inv[i] = 1.0 / D_sqrt[i];
     }
@@ -190,25 +189,26 @@ void sparse_normalization(double *val, int *col, int *row_ptr, double *D_sqrt, i
     for (int i = 0; i < n; i++)
     {
         double di = D_inv[i];
-        for (int p = row_ptr[i]; p < row_ptr[i + 1]; p++)
+        for (int p = csr_indptr[i]; p < csr_indptr[i + 1]; p++)
         {
-            val[p] *= (di * D_inv[col[p]]);
+            csr_data[p] *= (di * D_inv[csr_indices[p]]);
         }
     }
     free(q_inv);
     free(D_inv);
 }
 
-void sparse_rsvd(double *val, int *col, int *row_ptr, double *X, double *eigenvectors, double *eigenvalues, int n, int m, int n_iter)
+// RSVD for CSR, same logic as for dense matrix
+void sparse_rsvd(double *csr_data, int *csr_indices, int *csr_indptr, double *X, double *eigenvectors, double *eigenvalues, int n, int m, int n_iter)
 {
-    double *Y = (double *)malloc(n * m * sizeof(double));
+    double *Y = malloc(n * m * sizeof(double));
     double *Y_mem = Y;
 
     for (int iter = 0; iter < n_iter; iter++)
     {
-        sparse_multiplication(n, m, val, col, row_ptr, X, Y);
+        sparse_multiplication(n, m, csr_data, csr_indices, csr_indptr, X, Y);
 
-#pragma omp parallel for
+        #pragma omp parallel for
         for (int i = 0; i < n * m; i++)
             Y[i] += X[i];
 
@@ -219,9 +219,9 @@ void sparse_rsvd(double *val, int *col, int *row_ptr, double *X, double *eigenve
         Y = temp;
     }
 
-    sparse_multiplication(n, m, val, col, row_ptr, X, Y);
+    sparse_multiplication(n, m, csr_data, csr_indices, csr_indptr, X, Y);
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for (int i = 0; i < n * m; i++)
         Y[i] += X[i];
 
