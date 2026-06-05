@@ -1,20 +1,10 @@
-#include "diffusion_core.h"
-#include <math.h>
-#include <omp.h>
-#include <stdlib.h>
-#include <Rmath.h>
-#include <R.h>
-#ifndef USE_FC_LEN_T
-#define USE_FC_LEN_T
-#endif
-#include <Rconfig.h>
-#include <R_ext/Lapack.h>
+#include "cDiffusion.h"
 
-// Creating similarity matrix with kernel function
-void apply_gauss(double *data, double *dist, int n, int p, double sigma)
+// Similarity matrix with kernel function
+void apply_gauss(double *data, double *dist, int n, int dim, double sigma)
 {
 
-    double z = -1.0 / (2.0 * sigma * sigma);
+    double z = -1.0 / (2.0 * sigma * sigma); 
 
 #pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < n; i++)
@@ -25,9 +15,9 @@ void apply_gauss(double *data, double *dist, int n, int p, double sigma)
         {
             double sum_sq = 0.0;
 
-            for (int k = 0; k < p; k++)
+            for (int k = 0; k < dim; k++)
             {
-                double diff = data[k + i * p] - data[k + j * p];
+                double diff = data[k + i * dim] - data[k + j * dim];
                 sum_sq += diff * diff;
             }
 
@@ -39,11 +29,10 @@ void apply_gauss(double *data, double *dist, int n, int p, double sigma)
     }
 }
 
-// Calculates row sums, normalizes the kernel, then normalizes by the square root of the new row sums (D_sqrt)
-// to create a symmetric transition matrix.
+// Calculates row sums, normalizes the kernel and then symmetrization 
 void matrix_normalization(double *dist, double *D_sqrt, int n)
 {
-    double *q = (double *)malloc(n * sizeof(double));
+    double *q = malloc(n * sizeof(double));
 
 #pragma omp parallel for
     for (int j = 0; j < n; j++)
@@ -117,7 +106,6 @@ void matrix_multiplication(double *A, double *X, double *Y, int n, int m)
     }
 }
 
-// Modified Gram-Schmidt since it is more stable numerically
 void ortogonalize(double *X, int n, int m)
 {
 
@@ -133,10 +121,11 @@ void ortogonalize(double *X, int n, int m)
             norm += val * val;
         }
         norm = sqrt(norm);
+        double inv_norm = 1/norm;
 
         for (int i = 0; i < n; i++)
         {
-            X[i + j * n] /= norm;
+            X[i + j * n] *= inv_norm;
         }
 
 #pragma omp parallel for
@@ -161,7 +150,7 @@ void ortogonalize(double *X, int n, int m)
 void find_eigenvectors(double *X, double *Y, double *eigenvectors, double *eigenvalues, int n, int m)
 {
 
-    double *B = (double *)malloc(m * m * sizeof(double));
+    double *B = malloc(m * m * sizeof(double));
 
     for (int i = 0; i < m; i++)
     {
@@ -179,7 +168,7 @@ void find_eigenvectors(double *X, double *Y, double *eigenvectors, double *eigen
     char jobz = 'V';
     char uplo = 'U';
     int lwork = 3 * m - 1;
-    double *work = (double *)malloc(lwork * sizeof(double));
+    double *work = malloc(lwork * sizeof(double));
     int info;
 
     dsyev_(&jobz, &uplo, &m, B, &m, eigenvalues, work, &lwork, &info, 1, 1);
@@ -213,7 +202,7 @@ void find_eigenvectors(double *X, double *Y, double *eigenvectors, double *eigen
 void randomized_svd(double *A, double *X, double *eigenvectors, double *eigenvalues, int n, int m, int n_iter)
 {
 
-    double *Y = (double *)malloc(n * m * sizeof(double));
+    double *Y = malloc(n * m * sizeof(double));
     double *Y_mem = Y;
 
     for (int iter = 0; iter < n_iter; iter++)
