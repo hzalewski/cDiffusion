@@ -7,7 +7,7 @@
 estimate_sigma(data, sample_size = 500)
 }
 \arguments{
-\item{data}{Numeric matrix or data.frame of input data.}
+\item{data}{Numeric matrix or data.frame.}
 
 \item{sample_size}{Integer. Number of points to sample for estimation (default 500).}
 }
@@ -20,8 +20,8 @@ Uses the median heuristic to automatically estimate the optimal bandwidth
 }
 \examples{
 
-dane <- matrix(rnorm(100), nrow = 20, ncol = 5)
+data <- matrix(rnorm(100), nrow = 20, ncol = 5)
 
-optymalna_sigma <- estimate_sigma(dane)
+optimal_sigma <- estimate_sigma(data)
 
 }

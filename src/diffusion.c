@@ -64,7 +64,7 @@ SEXP c_run_diffusion(SEXP r_data, SEXP r_sigma, SEXP r_m, SEXP r_n_iter)
     return r_list;
 }
 
-SEXP c_run_sparse_diffusion(SEXP r_data, SEXP r_sigma, SEXP r_k_neighbors, SEXP r_m, SEXP r_n_iter)
+SEXP c_run_sparse_diffusion(SEXP r_data, SEXP r_k_neighbors, SEXP r_m, SEXP r_n_iter)
 {
     if (!Rf_isReal(r_data)) Rf_error("data must be numeric");
     if (!Rf_isMatrix(r_data)) Rf_error("data must be a matrix");
@@ -72,10 +72,6 @@ SEXP c_run_sparse_diffusion(SEXP r_data, SEXP r_sigma, SEXP r_k_neighbors, SEXP 
     int dim = Rf_nrows(r_data); 
     int n = Rf_ncols(r_data);   
 
-    if (!Rf_isReal(r_sigma)) Rf_error("sigma must be numeric");
-    if (Rf_length(r_sigma) != 1) Rf_error("sigma must be a scalar");
-    double sigma = Rf_asReal(r_sigma);
-    if (sigma <= 0.0) Rf_error("sigma must be greater than zero");
 
     if (!Rf_isInteger(r_k_neighbors) && !Rf_isReal(r_k_neighbors)) Rf_error("k_neighbors must be numeric");
     int k_neighbors = Rf_asInteger(r_k_neighbors);
@@ -104,7 +100,7 @@ SEXP c_run_sparse_diffusion(SEXP r_data, SEXP r_sigma, SEXP r_k_neighbors, SEXP 
     int *csr_indices = NULL;
     int *csr_indptr = NULL;
 
-    sparse(data, n, dim, k_neighbors, sigma, &csr_data, &csr_indices, &csr_indptr);
+    sparse(data, n, dim, k_neighbors, &csr_data, &csr_indices, &csr_indptr);
 
   
     sparse_normalization(csr_data, csr_indices, csr_indptr, D_sqrt, n);

@@ -14,8 +14,7 @@ double sq_dist(double *data, int n, int dim, int m1, int m2)
 // Builds a sparse k-NN matrix in CSR (Compressed Sparse Row) format.
 // Uses max-heap for finding k-NN and transforms the matrix to be symmetric (maybe some other way to do it?).
 
-// Local sigma works better so is there a point of leaving estimate_sigma
-void sparse(double *data, int n, int dim, int k_neighbours, double sigma, double **out_csr_data, int **out_csr_indices, int **out_csr_indptr)
+void sparse(double *data, int n, int dim, int k_neighbours, double **out_csr_data, int **out_csr_indices, int **out_csr_indptr)
 {
 
    

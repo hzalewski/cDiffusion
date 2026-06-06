@@ -46,7 +46,7 @@ void matrix_multiplication(double* A, double* X, double* Y, int n, int m);
 void randomized_svd(double *A, double *X, double *eigenvectors, double *eigenvalues, int n, int m, int n_iter);
 
 // Sparse matrix functions
-void sparse(double *data, int n, int dim, int k_neighbors, double sigma, double **out_csr_data, int **out_csr_indices, int **out_csr_indptr);
+void sparse(double *data, int n, int dim, int k_neighbors, double **out_csr_data, int **out_csr_indices, int **out_csr_indptr);
 void sparse_multiplication(int n, int m, double *csr_data, int *csr_indices, int *csr_indptr, double *X, double *Y);
 void sparse_normalization(double *csr_data, int *csr_indices, int *csr_indptr, double *D_sqrt, int n);
 void sparse_rsvd(double *csr_data, int *csr_indices, int *csr_indptr, double *X, double *eigenvectors, double *eigenvalues, int n, int m, int n_iter);

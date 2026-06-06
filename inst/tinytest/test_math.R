@@ -5,8 +5,8 @@ mat <- matrix(rnorm(N * P), nrow = N, ncol = P)
 k_val <- 3
 over_val <- 2 
 
-res_dense <- run_diffusion(mat, sigma = 1.0, k = k_val, oversampling = over_val, n_iter = 5, method = "dense")
-res_sparse <- run_diffusion(mat, sigma = 1.0, k = k_val, oversampling = over_val, n_iter = 5, k_neighbors = 10, method = "sparse")
+res_dense <- run_diffusion(mat, sigma = 1.0, k = k_val, oversampling = over_val, n_iter = 5)
+res_sparse <- run_diffusion_sparse(mat, k = k_val, oversampling = over_val, n_iter = 5, k_neighbors = 10)
 
 expect_true(inherits(res_dense, "diffmap"), info = "Output should have class 'diffmap'")
 expect_true(is.list(res_dense), info = "Output should be a list")
@@ -23,9 +23,9 @@ expect_true(res_dense$eigenvalues[1] >= res_dense$eigenvalues[2], info = "Eigenv
 expect_true(res_sparse$eigenvalues[1] >= res_sparse$eigenvalues[2])
 
 set.seed(2979)
-res_run1 <- run_diffusion(mat, sigma = 1.0, k = k_val, oversampling = over_val, n_iter = 5, method = "dense")
+res_run1 <- run_diffusion(mat, sigma = 1.0, k = k_val, oversampling = over_val, n_iter = 5)
 set.seed(2979)
-res_run2 <- run_diffusion(mat, sigma = 1.0, k = k_val, oversampling = over_val, n_iter = 5, method = "dense")
+res_run2 <- run_diffusion(mat, sigma = 1.0, k = k_val, oversampling = over_val, n_iter = 5)
 
 expect_equal(res_run1$eigenvalues, res_run2$eigenvalues, info = "Values are not equal with the same seed")
 expect_equal(res_run1$coordinates, res_run2$coordinates, info = "Coordinates are not equal with the same seed")
@@ -33,7 +33,7 @@ expect_equal(res_run1$coordinates, res_run2$coordinates, info = "Coordinates are
 est_sig <- estimate_sigma(mat)
 expect_true(is.numeric(est_sig) && est_sig > 0, info = "estimate_sigma didn't return positive number")
 
-res_c <- run_diffusion(mat, sigma = est_sig, k = k_val, oversampling = 7, n_iter = 100, method = "dense")
+res_c <- run_diffusion(mat, sigma = est_sig, k = k_val, oversampling = 7, n_iter = 100)
 
 
 D_sq <- as.matrix(dist(mat))^2 

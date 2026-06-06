@@ -33,8 +33,7 @@ usage scales linearly rather than quadratically.
 Uses an adaptive Gaussian kernel (local sigma based on the distance to the k-th nearest neighbor).
 }
 \examples{
-data <- matrix(runif(500), nrow = 100, ncol = 5)
-optimal_sigma <- estimate_sigma(data)
-model <- diffusion_sparse(data, sigma = optimal_sigma, k_neighbors = 10)
+data <- matrix(runif(5000), nrow = 1000, ncol = 5)
+model <- run_diffusion_sparse(data, k_neighbors = 20, oversampling = 20, n_iter = 200)
 
 }
