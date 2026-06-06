@@ -4,36 +4,30 @@
 \alias{run_diffusion}
 \title{Run diffusion map}
 \usage{
-run_diffusion(
-  data,
-  sigma = 1,
-  k = 2,
-  method = "auto",
-  k_neighbors = 15,
-  oversampling = 20,
-  n_iter = 10
-)
+run_diffusion(data, sigma = 1, k = 2, oversampling = 20, n_iter = 10)
 }
 \arguments{
-\item{data}{Numeric matrix.}
+\item{data}{Numeric matrix or data.frame.}
 
 \item{sigma}{Numeric. Bandwidth for Gaussian kernel (default 1.0).}
 
 \item{k}{Integer. Number of diffusion dimensions to return (default 2).}
 
-\item{method}{Character. One of "auto", "dense", "sparse".}
+\item{oversampling}{Integer. Dimensions added for stability in randomized SVD algorithm (default 20).}
 
-\item{k_neighbors}{Integer. Number of neighbors for sparse method (default 15).}
-
-\item{oversampling}{Integer. Dimensions added for stability in rSVD (default 20).}
-
-\item{n_iter}{Integer. Number of subspace iterations in rSVD (default 10).}
+\item{n_iter}{Integer. Number of subspace iterations in randomized SVD algorithm (default 10).}
 }
 \value{
 A diffmap object
 }
 \description{
-Main package function to perform non-linear dimensionality reduction.
-Features automatic method dispatch between dense exact evaluation 
-and highly optimized sparse k-NN evaluation based on dataset size.
+Performs non-linear dimensionality reduction using the exact dense method.
+Best suited for smaller datasets where calculating the full N x N distance 
+matrix fits safely into memory.
+}
+\examples{
+data <- matrix(runif(100), nrow = 20, ncol = 5)
+optimal_sigma <- estimate_sigma(data)
+model <- run_diffusion(data, sigma = optimal_sigma)
+
 }

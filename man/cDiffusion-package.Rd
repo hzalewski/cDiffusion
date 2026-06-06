@@ -4,9 +4,9 @@
 \name{cDiffusion-package}
 \alias{cDiffusion}
 \alias{cDiffusion-package}
-\title{cDiffusion: Diffusion Maps implementation using R C API}
+\title{cDiffusion: Non-Linear Dimensionality Reduction via Diffusion Maps}
 \description{
-No description yet
+Implements memory-efficient, non-linear dimensionality reduction using Diffusion Maps. Features an automated engine dispatch that dynamically switches between dense exact evaluations for small datasets and a highly optimized, multi-threaded C-engine using Max-Heaps and randomized Singular Value Decomposition (rSVD) for large-scale data.
 }
 \author{
 \strong{Maintainer}: Hubert Zalewski \email{Hubert.Zalewski2.stud@pw.edu.pl}
