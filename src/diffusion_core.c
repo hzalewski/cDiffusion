@@ -4,7 +4,7 @@
 void apply_gauss(double *data, double *dist, int n, int dim, double sigma)
 {
 
-    double z = -1.0 / (2.0 * sigma * sigma); 
+    double z = -1.0 / (2.0 * sigma * sigma);
 
 #pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < n; i++)
@@ -29,7 +29,7 @@ void apply_gauss(double *data, double *dist, int n, int dim, double sigma)
     }
 }
 
-// Calculates row sums, normalizes the kernel and then symmetrization 
+// Calculates row sums, normalizes the kernel and then symmetrization
 void matrix_normalization(double *dist, double *D_sqrt, int n)
 {
     double *q = malloc(n * sizeof(double));
@@ -121,7 +121,7 @@ void ortogonalize(double *X, int n, int m)
             norm += val * val;
         }
         norm = sqrt(norm);
-        double inv_norm = 1/norm;
+        double inv_norm = 1 / norm;
 
         for (int i = 0; i < n; i++)
         {

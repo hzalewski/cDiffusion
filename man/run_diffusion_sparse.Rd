@@ -8,7 +8,7 @@ run_diffusion_sparse(
   data,
   k = 2,
   k_neighbors = 15,
-  oversampling = 20,
+  oversampling = 10,
   n_iter = 200
 )
 }
@@ -19,7 +19,7 @@ run_diffusion_sparse(
 
 \item{k_neighbors}{Integer. Number of nearest neighbors for sparse method (default 15).}
 
-\item{oversampling}{Integer. Dimensions added for stability in randomized SVD algorithm (default 20).}
+\item{oversampling}{Integer. Dimensions added for stability in randomized SVD algorithm (default 10). Higher values may negatively impact results of thr algorithm.}
 
 \item{n_iter}{Integer. Number of subspace iterations in randomized SVD algorithm (default 200).}
 }
@@ -34,6 +34,6 @@ Uses an adaptive Gaussian kernel (local sigma based on the distance to the k-th 
 }
 \examples{
 data <- matrix(runif(5000), nrow = 1000, ncol = 5)
-model <- run_diffusion_sparse(data, k_neighbors = 20, oversampling = 20, n_iter = 200)
+model <- run_diffusion_sparse(data, k_neighbors = 20, oversampling = 10, n_iter = 200)
 
 }

@@ -13,7 +13,7 @@ run_diffusion(data, sigma = 1, k = 2, oversampling = 20, n_iter = 10)
 
 \item{k}{Integer. Number of diffusion dimensions to return (default 2).}
 
-\item{oversampling}{Integer. Dimensions added for stability in randomized SVD algorithm (default 20).}
+\item{oversampling}{Integer. Dimensions added for stability in randomized SVD algorithm (default 10). Higher values may negatively impact results of thr algorithm.}
 
 \item{n_iter}{Integer. Number of subspace iterations in randomized SVD algorithm (default 10).}
 }

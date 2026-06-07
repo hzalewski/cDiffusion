@@ -17,37 +17,42 @@ double sq_dist(double *data, int n, int dim, int m1, int m2)
 void sparse(double *data, int n, int dim, int k_neighbours, double **out_csr_data, int **out_csr_indices, int **out_csr_indptr)
 {
 
-   
-    double *tmp_dist_sq = malloc(n * k_neighbours * sizeof(double)); 
+    double *tmp_dist_sq = malloc(n * k_neighbours * sizeof(double));
     double *local_sigmas = malloc(n * sizeof(double));
     int *tmp_col = malloc(n * k_neighbours * sizeof(int));
 
-    #pragma omp parallel for schedule(dynamic)
-    for (int j = 0; j < n; j++) {
+#pragma omp parallel for schedule(dynamic)
+    for (int j = 0; j < n; j++)
+    {
         knn_node *heap = (knn_node *)malloc(k_neighbours * sizeof(knn_node));
         int i = 0, filled = 0;
 
-        while (i < n && filled < k_neighbours) {
+        while (i < n && filled < k_neighbours)
+        {
             heap[filled].idx = i;
             heap[filled].dist = sq_dist(data, n, dim, j, i);
-            filled++; i++;
+            filled++;
+            i++;
         }
-        build_heap(heap, k_neighbours); 
+        build_heap(heap, k_neighbours);
 
-        for (; i < n; i++) {
+        for (; i < n; i++)
+        {
             double d_sq = sq_dist(data, n, dim, j, i);
-            if (d_sq < heap[0].dist) {
+            if (d_sq < heap[0].dist)
+            {
                 heap[0].idx = i;
                 heap[0].dist = d_sq;
                 down_heap(heap, 0, k_neighbours);
             }
         }
-        // adaptive kernel - local sigma is the distance to k-th nearest neighbour 
-        local_sigmas[j] = sqrt(heap[0].dist); 
+        // adaptive kernel - local sigma is the distance to k-th nearest neighbour
+        local_sigmas[j] = sqrt(heap[0].dist);
 
-        for (int p = 0; p < k_neighbours; p++) {
+        for (int p = 0; p < k_neighbours; p++)
+        {
             tmp_col[j * k_neighbours + p] = heap[p].idx;
-            tmp_dist_sq[j * k_neighbours + p] = heap[p].dist; 
+            tmp_dist_sq[j * k_neighbours + p] = heap[p].dist;
         }
         free(heap);
     }
@@ -55,66 +60,80 @@ void sparse(double *data, int n, int dim, int k_neighbours, double **out_csr_dat
     *out_csr_indptr = calloc((n + 1), sizeof(int));
 
     // To create symmetry we add edges in both directions
-    for (int j = 0; j < n; j++) {
-        for (int p = 0; p < k_neighbours; p++) {
+    for (int j = 0; j < n; j++)
+    {
+        for (int p = 0; p < k_neighbours; p++)
+        {
             int neighbor = tmp_col[j * k_neighbours + p];
 
             (*out_csr_indptr)[j + 1]++; // Edge fron j to neighbour
 
             int is_mutual = 0;
-            for (int m = 0; m < k_neighbours; m++) {
-                if (tmp_col[neighbor * k_neighbours + m] == j) {
-                    is_mutual = 1; break;
+            for (int m = 0; m < k_neighbours; m++)
+            {
+                if (tmp_col[neighbor * k_neighbours + m] == j)
+                {
+                    is_mutual = 1;
+                    break;
                 }
             }
             // Space for connection in other direction
-            if (!is_mutual) {
+            if (!is_mutual)
+            {
                 (*out_csr_indptr)[neighbor + 1]++;
             }
         }
     }
 
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++)
+    {
         (*out_csr_indptr)[i + 1] += (*out_csr_indptr)[i];
     }
 
-    // Final CSR arrays 
+    // Final CSR arrays
     int total_edges = (*out_csr_indptr)[n];
     *out_csr_data = malloc(total_edges * sizeof(double));
     *out_csr_indices = malloc(total_edges * sizeof(int));
 
     // current insertion position for each row
     int *current_pos = malloc(n * sizeof(int));
-    for (int i = 0; i < n; i++) current_pos[i] = (*out_csr_indptr)[i];
+    for (int i = 0; i < n; i++)
+        current_pos[i] = (*out_csr_indptr)[i];
 
-    for (int j = 0; j < n; j++) {
-        for (int p = 0; p < k_neighbours; p++) {
+    for (int j = 0; j < n; j++)
+    {
+        for (int p = 0; p < k_neighbours; p++)
+        {
             int neighbor = tmp_col[j * k_neighbours + p];
-            double d_sq = tmp_dist_sq[j * k_neighbours + p]; 
+            double d_sq = tmp_dist_sq[j * k_neighbours + p];
             double weight = exp(-d_sq / (local_sigmas[j] * local_sigmas[neighbor]));
 
             int pos1;
             // insert edge
             pos1 = current_pos[j];
-            current_pos[j]++; 
-            
+            current_pos[j]++;
+
             (*out_csr_indices)[pos1] = neighbor;
             (*out_csr_data)[pos1] = weight;
 
             // if not mutual insert reverse edge
             int is_mutual = 0;
-            for (int m = 0; m < k_neighbours; m++) {
-                if (tmp_col[neighbor * k_neighbours + m] == j) {
-                    is_mutual = 1; break;
+            for (int m = 0; m < k_neighbours; m++)
+            {
+                if (tmp_col[neighbor * k_neighbours + m] == j)
+                {
+                    is_mutual = 1;
+                    break;
                 }
             }
 
-            if (!is_mutual) {
+            if (!is_mutual)
+            {
                 int pos2;
 
-                pos2 = current_pos[neighbor]; 
-                current_pos[neighbor]++; 
-                
+                pos2 = current_pos[neighbor];
+                current_pos[neighbor]++;
+
                 (*out_csr_indices)[pos2] = j;
                 (*out_csr_data)[pos2] = weight;
             }
@@ -140,7 +159,7 @@ void sparse_multiplication(int n, int m, double *csr_data, int *csr_indices, int
             double sum = 0.0;
             for (int p = start; p < end; p++)
             {
-                sum += csr_data[p] * X[csr_indices[p] + j * n]; 
+                sum += csr_data[p] * X[csr_indices[p] + j * n];
             }
             Y[row + j * n] = sum;
         }
@@ -151,8 +170,6 @@ void sparse_normalization(double *csr_data, int *csr_indices, int *csr_indptr, d
 {
     double *q_inv = malloc(n * sizeof(double));
     double *D_inv = malloc(n * sizeof(double));
-
-
 
 #pragma omp parallel for
     for (int i = 0; i < n; i++)
@@ -206,7 +223,7 @@ void sparse_rsvd(double *csr_data, int *csr_indices, int *csr_indptr, double *X,
     {
         sparse_multiplication(n, m, csr_data, csr_indices, csr_indptr, X, Y);
 
-        #pragma omp parallel for
+#pragma omp parallel for
         for (int i = 0; i < n * m; i++)
             Y[i] += X[i];
 
@@ -219,7 +236,7 @@ void sparse_rsvd(double *csr_data, int *csr_indices, int *csr_indptr, double *X,
 
     sparse_multiplication(n, m, csr_data, csr_indices, csr_indptr, X, Y);
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int i = 0; i < n * m; i++)
         Y[i] += X[i];
 

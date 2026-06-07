@@ -11,7 +11,7 @@
 #' @param data Numeric matrix or data.frame.
 #' @param sigma Numeric. Bandwidth for Gaussian kernel (default 1.0).
 #' @param k Integer. Number of diffusion dimensions to return (default 2).
-#' @param oversampling Integer. Dimensions added for stability in randomized SVD algorithm (default 20).
+#' @param oversampling Integer. Dimensions added for stability in randomized SVD algorithm (default 10). Higher values may negatively impact results of thr algorithm.
 #' @param n_iter Integer. Number of subspace iterations in randomized SVD algorithm (default 10).
 #' 
 #' @return A diffmap object
@@ -32,7 +32,7 @@ run_diffusion <- function(data, sigma = 1.0, k = 2, oversampling = 20, n_iter = 
     ## maybe default sigma should be estimated instead of 1.0
     ## TODO: better default values for oversampling n_iter and k_neighbours especially for sparse method
     ## TODO: add kmeans after diffusion - easy spectral clustering
-    ## Ensure there are not problems when input is too large
+    ## Ensure there are not problems when input is too large - also very high-dimensional data 
 
 
     if (!is.matrix(data) && !is.data.frame(data)) {
@@ -100,17 +100,17 @@ run_diffusion <- function(data, sigma = 1.0, k = 2, oversampling = 20, n_iter = 
 #' @param data Numeric matrix or data.frame.
 #' @param k Integer. Number of diffusion dimensions to return (default 2).
 #' @param k_neighbors Integer. Number of nearest neighbors for sparse method (default 15).
-#' @param oversampling Integer. Dimensions added for stability in randomized SVD algorithm (default 20).
+#' @param oversampling Integer. Dimensions added for stability in randomized SVD algorithm (default 10). Higher values may negatively impact results of thr algorithm.
 #' @param n_iter Integer. Number of subspace iterations in randomized SVD algorithm (default 200).
 #' 
 #' @return A diffmap object
 #' 
 #' @examples
 #' data <- matrix(runif(5000), nrow = 1000, ncol = 5)
-#' model <- run_diffusion_sparse(data, k_neighbors = 20, oversampling = 20, n_iter = 200)
+#' model <- run_diffusion_sparse(data, k_neighbors = 20, oversampling = 10, n_iter = 200)
 #'
 #' @export
-run_diffusion_sparse <- function(data, k = 2, k_neighbors = 15, oversampling = 20, n_iter = 200) {
+run_diffusion_sparse <- function(data, k = 2, k_neighbors = 15, oversampling = 10, n_iter = 200) {
 
     if (!is.matrix(data) && !is.data.frame(data)) {
         stop("'data' must be a numeric matrix or a data.frame.")

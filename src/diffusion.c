@@ -2,27 +2,36 @@
 
 SEXP c_run_diffusion(SEXP r_data, SEXP r_sigma, SEXP r_m, SEXP r_n_iter)
 {
-  
-    if (!Rf_isReal(r_data)) Rf_error("data must be numeric");
-    if (!Rf_isMatrix(r_data)) Rf_error("data must be a matrix");
 
-    int dim = Rf_nrows(r_data); 
-    int n = Rf_ncols(r_data); 
+    if (!Rf_isReal(r_data))
+        Rf_error("data must be numeric");
+    if (!Rf_isMatrix(r_data))
+        Rf_error("data must be a matrix");
 
-    if (!Rf_isReal(r_sigma)) Rf_error("sigma must be numeric");
-    if (Rf_length(r_sigma) != 1) Rf_error("sigma must be a scalar");
+    int dim = Rf_nrows(r_data);
+    int n = Rf_ncols(r_data);
+
+    if (!Rf_isReal(r_sigma))
+        Rf_error("sigma must be numeric");
+    if (Rf_length(r_sigma) != 1)
+        Rf_error("sigma must be a scalar");
     double sigma = Rf_asReal(r_sigma);
-    if (sigma <= 0.0) Rf_error("sigma must be greater than zero");
+    if (sigma <= 0.0)
+        Rf_error("sigma must be greater than zero");
 
-    if (!Rf_isInteger(r_m) && !Rf_isReal(r_m)) Rf_error("number of dimensions (m) must be numeric");
+    if (!Rf_isInteger(r_m) && !Rf_isReal(r_m))
+        Rf_error("number of dimensions (m) must be numeric");
     int m = Rf_asInteger(r_m);
-    if (m < 1) Rf_error("number of dimensions (m) must be greater than zero");
-    if (m >= n) Rf_error("number of dimensions (m) must be strictly less than the number of samples.");
+    if (m < 1)
+        Rf_error("number of dimensions (m) must be greater than zero");
+    if (m >= n)
+        Rf_error("number of dimensions (m) must be strictly less than the number of samples.");
 
-    if (!Rf_isInteger(r_n_iter) && !Rf_isReal(r_n_iter)) Rf_error("n_iter must be numeric");
+    if (!Rf_isInteger(r_n_iter) && !Rf_isReal(r_n_iter))
+        Rf_error("n_iter must be numeric");
     int n_iter = Rf_asInteger(r_n_iter);
-    if (n_iter < 1) Rf_error("n_iter must be greater than zero");
-   
+    if (n_iter < 1)
+        Rf_error("n_iter must be greater than zero");
 
     SEXP r_dist = PROTECT(Rf_allocMatrix(REALSXP, n, n));
     SEXP r_D_sqrt = PROTECT(Rf_allocVector(REALSXP, n));
@@ -43,8 +52,8 @@ SEXP c_run_diffusion(SEXP r_data, SEXP r_sigma, SEXP r_m, SEXP r_n_iter)
     randomized_svd(dist, X, eigvecs, REAL(r_eigvals), n, m, n_iter);
     free(X);
 
-    // Rescale eigenvectors using inverse of degree matrix
-    #pragma omp parallel for
+// Rescale eigenvectors using inverse of degree matrix
+#pragma omp parallel for
     for (int j = 0; j < m; j++)
     {
         for (int i = 0; i < n; i++)
@@ -66,27 +75,35 @@ SEXP c_run_diffusion(SEXP r_data, SEXP r_sigma, SEXP r_m, SEXP r_n_iter)
 
 SEXP c_run_sparse_diffusion(SEXP r_data, SEXP r_k_neighbors, SEXP r_m, SEXP r_n_iter)
 {
-    if (!Rf_isReal(r_data)) Rf_error("data must be numeric");
-    if (!Rf_isMatrix(r_data)) Rf_error("data must be a matrix");
-    
-    int dim = Rf_nrows(r_data); 
-    int n = Rf_ncols(r_data);   
+    if (!Rf_isReal(r_data))
+        Rf_error("data must be numeric");
+    if (!Rf_isMatrix(r_data))
+        Rf_error("data must be a matrix");
 
+    int dim = Rf_nrows(r_data);
+    int n = Rf_ncols(r_data);
 
-    if (!Rf_isInteger(r_k_neighbors) && !Rf_isReal(r_k_neighbors)) Rf_error("k_neighbors must be numeric");
+    if (!Rf_isInteger(r_k_neighbors) && !Rf_isReal(r_k_neighbors))
+        Rf_error("k_neighbors must be numeric");
     int k_neighbors = Rf_asInteger(r_k_neighbors);
-    if (k_neighbors < 1) Rf_error("k_neighbors must be greater than zero");
+    if (k_neighbors < 1)
+        Rf_error("k_neighbors must be greater than zero");
 
-    if (!Rf_isInteger(r_m) && !Rf_isReal(r_m)) Rf_error("number of dimensions (m) must be numeric");
+    if (!Rf_isInteger(r_m) && !Rf_isReal(r_m))
+        Rf_error("number of dimensions (m) must be numeric");
     int m = Rf_asInteger(r_m);
-    if (m < 1) Rf_error("number of dimensions (m) must be greater than zero");
-    if (m >= n) Rf_error("number of dimensions (m) must be strictly less than the number of samples.");
+    if (m < 1)
+        Rf_error("number of dimensions (m) must be greater than zero");
+    if (m >= n)
+        Rf_error("number of dimensions (m) must be strictly less than the number of samples.");
 
-    if (!Rf_isInteger(r_n_iter) && !Rf_isReal(r_n_iter)) Rf_error("n_iter must be numeric");
+    if (!Rf_isInteger(r_n_iter) && !Rf_isReal(r_n_iter))
+        Rf_error("n_iter must be numeric");
     int n_iter = Rf_asInteger(r_n_iter);
-    if (n_iter < 1) Rf_error("n_iter must be greater than zero");
-    if (k_neighbors >= n) Rf_error("k_neighbors must be strictly less than the number of samples.");
-  
+    if (n_iter < 1)
+        Rf_error("n_iter must be greater than zero");
+    if (k_neighbors >= n)
+        Rf_error("k_neighbors must be strictly less than the number of samples.");
 
     SEXP r_D_sqrt = PROTECT(Rf_allocVector(REALSXP, n));
     SEXP r_eigvals = PROTECT(Rf_allocVector(REALSXP, m));
@@ -102,7 +119,6 @@ SEXP c_run_sparse_diffusion(SEXP r_data, SEXP r_k_neighbors, SEXP r_m, SEXP r_n_
 
     sparse(data, n, dim, k_neighbors, &csr_data, &csr_indices, &csr_indptr);
 
-  
     sparse_normalization(csr_data, csr_indices, csr_indptr, D_sqrt, n);
 
     double *X = malloc(n * m * sizeof(double));
@@ -110,14 +126,13 @@ SEXP c_run_sparse_diffusion(SEXP r_data, SEXP r_k_neighbors, SEXP r_m, SEXP r_n_
 
     sparse_rsvd(csr_data, csr_indices, csr_indptr, X, eigvecs, REAL(r_eigvals), n, m, n_iter);
 
-    // Re-scale eigenvectors using inverse of degree matrix
-    #pragma omp parallel for
+// Re-scale eigenvectors using inverse of degree matrix
+#pragma omp parallel for
     for (int j = 0; j < m; j++)
     {
         for (int i = 0; i < n; i++)
             eigvecs[i + j * n] /= D_sqrt[i];
     }
-
 
     free(csr_data);
     free(csr_indices);
