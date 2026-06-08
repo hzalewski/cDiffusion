@@ -32,7 +32,7 @@ void apply_gauss(double *data, double *dist, int n, int dim, double sigma)
 // Calculates row sums, normalizes the kernel and then symmetrization
 void matrix_normalization(double *dist, double *D_sqrt, int n)
 {
-    double *q = malloc(n * sizeof(double));
+    double *q = R_Calloc(n, double);
 
 #pragma omp parallel for
     for (int j = 0; j < n; j++)
@@ -70,7 +70,7 @@ void matrix_normalization(double *dist, double *D_sqrt, int n)
         }
     }
 
-    free(q);
+    R_Free(q);
 }
 
 void random_matrix(double *X, int n, int m)
@@ -150,7 +150,7 @@ void ortogonalize(double *X, int n, int m)
 void find_eigenvectors(double *X, double *Y, double *eigenvectors, double *eigenvalues, int n, int m)
 {
 
-    double *B = malloc(m * m * sizeof(double));
+    double *B = R_Calloc(m * m, double);
 
     for (int i = 0; i < m; i++)
     {
@@ -168,46 +168,48 @@ void find_eigenvectors(double *X, double *Y, double *eigenvectors, double *eigen
     char jobz = 'V';
     char uplo = 'U';
     int lwork = 3 * m - 1;
-    double *work = malloc(lwork * sizeof(double));
+    double *work = R_Calloc(lwork, double);
     int info;
 
     dsyev_(&jobz, &uplo, &m, B, &m, eigenvalues, work, &lwork, &info, 1, 1);
 
     if (info != 0)
     {
-        free(B);
-        free(work);
+        R_Free(B);
+        R_Free(work);
         Rf_error("LAPACK dsyev_ error: %d", info);
     }
 
 #pragma omp parallel for
-    for (int i = 0; i < n; i++)
+    for (int j = 0; j < m; j++)
     {
-        for (int j = 0; j < m; j++)
+        for (int i = 0; i < n; i++)
         {
-            double sum = 0.0;
-            for (int k = 0; k < m; k++)
+            eigenvectors[i + j * n] = 0.0;
+        }
+        for (int k = 0; k < m; k++)
+        {
+            for (int i = 0; i < n; i++)
             {
-                sum += X[i + k * n] * B[k + j * m];
+                eigenvectors[i + j * n] += X[i + k * n] * B[k + j * m];
             }
-            eigenvectors[i + j * n] = sum;
         }
     }
 
-    free(B);
-    free(work);
+    R_Free(B);
+    R_Free(work);
 }
 
 // Randimized Singular Value Decomposition with power iteration
 void randomized_svd(double *A, double *X, double *eigenvectors, double *eigenvalues, int n, int m, int n_iter)
 {
 
-    double *Y = malloc(n * m * sizeof(double));
+    double *Y = R_Calloc(n * m, double);
     double *Y_mem = Y;
 
     for (int iter = 0; iter < n_iter; iter++)
     {
-
+        R_CheckUserInterrupt();
         matrix_multiplication(A, X, Y, n, m);
 
         ortogonalize(Y, n, m);
@@ -221,5 +223,5 @@ void randomized_svd(double *A, double *X, double *eigenvectors, double *eigenval
 
     find_eigenvectors(X, Y, eigenvectors, eigenvalues, n, m);
 
-    free(Y_mem);
+    R_Free(Y_mem);
 }

@@ -17,14 +17,15 @@ double sq_dist(double *data, int n, int dim, int m1, int m2)
 void sparse(double *data, int n, int dim, int k_neighbours, double **out_csr_data, int **out_csr_indices, int **out_csr_indptr)
 {
 
-    double *tmp_dist_sq = malloc(n * k_neighbours * sizeof(double));
-    double *local_sigmas = malloc(n * sizeof(double));
-    int *tmp_col = malloc(n * k_neighbours * sizeof(int));
+    double *tmp_dist_sq = R_Calloc(n * k_neighbours, double);
+    double *local_sigmas = R_Calloc(n, double);
+    int *tmp_col = R_Calloc(n * k_neighbours, int);
+    knn_node *n_heaps = R_Calloc(n * k_neighbours, knn_node);
 
 #pragma omp parallel for schedule(dynamic)
     for (int j = 0; j < n; j++)
     {
-        knn_node *heap = (knn_node *)malloc(k_neighbours * sizeof(knn_node));
+        knn_node *heap = &(n_heaps[j * k_neighbours]);
         int i = 0, filled = 0;
 
         while (i < n && filled < k_neighbours)
@@ -54,10 +55,11 @@ void sparse(double *data, int n, int dim, int k_neighbours, double **out_csr_dat
             tmp_col[j * k_neighbours + p] = heap[p].idx;
             tmp_dist_sq[j * k_neighbours + p] = heap[p].dist;
         }
-        free(heap);
     }
 
-    *out_csr_indptr = calloc((n + 1), sizeof(int));
+    R_Free(n_heaps);
+
+    *out_csr_indptr = R_Calloc((n + 1), int);
 
     // To create symmetry we add edges in both directions
     for (int j = 0; j < n; j++)
@@ -92,13 +94,15 @@ void sparse(double *data, int n, int dim, int k_neighbours, double **out_csr_dat
 
     // Final CSR arrays
     int total_edges = (*out_csr_indptr)[n];
-    *out_csr_data = malloc(total_edges * sizeof(double));
-    *out_csr_indices = malloc(total_edges * sizeof(int));
+    *out_csr_data = R_Calloc(total_edges, double);
+    *out_csr_indices = R_Calloc(total_edges, int);
 
     // current insertion position for each row
-    int *current_pos = malloc(n * sizeof(int));
+    int *current_pos = R_Calloc(n, int);
     for (int i = 0; i < n; i++)
+    {
         current_pos[i] = (*out_csr_indptr)[i];
+    }
 
     for (int j = 0; j < n; j++)
     {
@@ -140,10 +144,10 @@ void sparse(double *data, int n, int dim, int k_neighbours, double **out_csr_dat
         }
     }
 
-    free(tmp_col);
-    free(tmp_dist_sq);
-    free(local_sigmas);
-    free(current_pos);
+    R_Free(tmp_col);
+    R_Free(tmp_dist_sq);
+    R_Free(local_sigmas);
+    R_Free(current_pos);
 }
 
 void sparse_multiplication(int n, int m, double *csr_data, int *csr_indices, int *csr_indptr, double *X, double *Y)
@@ -168,8 +172,8 @@ void sparse_multiplication(int n, int m, double *csr_data, int *csr_indices, int
 // same logic as in regular matrix (diffusion_core.c)
 void sparse_normalization(double *csr_data, int *csr_indices, int *csr_indptr, double *D_sqrt, int n)
 {
-    double *q_inv = malloc(n * sizeof(double));
-    double *D_inv = malloc(n * sizeof(double));
+    double *q_inv = R_Calloc(n, double);
+    double *D_inv = R_Calloc(n, double);
 
 #pragma omp parallel for
     for (int i = 0; i < n; i++)
@@ -209,18 +213,19 @@ void sparse_normalization(double *csr_data, int *csr_indices, int *csr_indptr, d
             csr_data[p] *= (di * D_inv[csr_indices[p]]);
         }
     }
-    free(q_inv);
-    free(D_inv);
+    R_Free(q_inv);
+    R_Free(D_inv);
 }
 
 // RSVD for CSR, same logic as for dense matrix
 void sparse_rsvd(double *csr_data, int *csr_indices, int *csr_indptr, double *X, double *eigenvectors, double *eigenvalues, int n, int m, int n_iter)
 {
-    double *Y = malloc(n * m * sizeof(double));
+    double *Y = R_Calloc(n * m, double);
     double *Y_mem = Y;
 
     for (int iter = 0; iter < n_iter; iter++)
     {
+        R_CheckUserInterrupt();
         sparse_multiplication(n, m, csr_data, csr_indices, csr_indptr, X, Y);
 
 #pragma omp parallel for
@@ -242,5 +247,5 @@ void sparse_rsvd(double *csr_data, int *csr_indices, int *csr_indptr, double *X,
 
     find_eigenvectors(X, Y, eigenvectors, eigenvalues, n, m);
 
-    free(Y_mem);
+    R_Free(Y_mem);
 }

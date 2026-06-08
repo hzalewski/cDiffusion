@@ -4,14 +4,14 @@
 \alias{run_diffusion}
 \title{Run diffusion map}
 \usage{
-run_diffusion(data, sigma = 1, k = 2, oversampling = 20, n_iter = 10)
+run_diffusion(data, sigma = 1, dims = 2, oversampling = 20, n_iter = 10)
 }
 \arguments{
 \item{data}{Numeric matrix or data.frame.}
 
 \item{sigma}{Numeric. Bandwidth for Gaussian kernel (default 1.0).}
 
-\item{k}{Integer. Number of diffusion dimensions to return (default 2).}
+\item{dims}{Integer. Number of diffusion dimensions to return (default 2).}
 
 \item{oversampling}{Integer. Dimensions added for stability in randomized SVD algorithm (default 10). Higher values may negatively impact results of thr algorithm.}
 

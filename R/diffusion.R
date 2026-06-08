@@ -10,7 +10,7 @@
 #'
 #' @param data Numeric matrix or data.frame.
 #' @param sigma Numeric. Bandwidth for Gaussian kernel (default 1.0).
-#' @param k Integer. Number of diffusion dimensions to return (default 2).
+#' @param dims Integer. Number of diffusion dimensions to return (default 2).
 #' @param oversampling Integer. Dimensions added for stability in randomized SVD algorithm (default 10). Higher values may negatively impact results of thr algorithm.
 #' @param n_iter Integer. Number of subspace iterations in randomized SVD algorithm (default 10).
 #' 
@@ -25,14 +25,13 @@
 #' 
 #' 
 
-run_diffusion <- function(data, sigma = 1.0, k = 2, oversampling = 20, n_iter = 10) {
+run_diffusion <- function(data, sigma = 1.0, dims = 2, oversampling = 20, n_iter = 10) {
 
 
 
     ## maybe default sigma should be estimated instead of 1.0
     ## TODO: better default values for oversampling n_iter and k_neighbours especially for sparse method
-    ## TODO: add kmeans after diffusion - easy spectral clustering
-    ## Ensure there are not problems when input is too large - also very high-dimensional data 
+    ## 
 
 
     if (!is.matrix(data) && !is.data.frame(data)) {
@@ -51,12 +50,12 @@ run_diffusion <- function(data, sigma = 1.0, k = 2, oversampling = 20, n_iter = 
         warning(sprintf("WARNING: Number of observations N=%d is too big for 'dense' method. Consider using more memory friendly method 'diffusion_sparse'", N))
     }
     
-    m <- as.integer(k + oversampling)
+    m <- as.integer(dims + oversampling)
 
     if (m >= N) {
-        warning("WARNING: Overall number of computed dimensions (k + oversampling) is higher than N. Reducing oversampling.")
+        warning("WARNING: Overall number of computed dimensions (dims + oversampling) is higher than N. Reducing oversampling.")
         m <- as.integer(N - 1)
-        if (m <= k) stop("WARNING: N is too small to compute k dimensions.")
+        if (m <= dims) stop("WARNING: N is too small to compute dims dimensions.")
     }
     
     res <- .Call("c_run_diffusion", data_matrix, as.numeric(sigma), 
@@ -68,11 +67,11 @@ run_diffusion <- function(data, sigma = 1.0, k = 2, oversampling = 20, n_iter = 
     sorted_vectors <- res$vectors[, idx]
     
     # first vector is trivial so its useless
-    diff_coords <- sorted_vectors[, 2:(k+1)]
-    diff_vals <- sorted_values[2:(k+1)]
+    diff_coords <- sorted_vectors[, 2:(dims+1), drop = FALSE]
+    diff_vals <- sorted_values[2:(dims+1), drop = FALSE]
     
     # diffusion map embedding
-    for(i in 1:k) {
+    for(i in 1:dims) {
         diff_coords[, i] <- diff_coords[, i] * diff_vals[i]
     }
     
@@ -98,10 +97,10 @@ run_diffusion <- function(data, sigma = 1.0, k = 2, oversampling = 20, n_iter = 
 #' Uses an adaptive Gaussian kernel (local sigma based on the distance to the k-th nearest neighbor).
 #'
 #' @param data Numeric matrix or data.frame.
-#' @param k Integer. Number of diffusion dimensions to return (default 2).
-#' @param k_neighbors Integer. Number of nearest neighbors for sparse method (default 15).
+#' @param dims Integer. Number of diffusion dimensions to return (default 2).
+#' @param k_neighbors Integer. Number of nearest neighbors for sparse method (default 20).
 #' @param oversampling Integer. Dimensions added for stability in randomized SVD algorithm (default 10). Higher values may negatively impact results of thr algorithm.
-#' @param n_iter Integer. Number of subspace iterations in randomized SVD algorithm (default 200).
+#' @param n_iter Integer. Number of subspace iterations in randomized SVD algorithm (default 300).
 #' 
 #' @return A diffmap object
 #' 
@@ -110,7 +109,7 @@ run_diffusion <- function(data, sigma = 1.0, k = 2, oversampling = 20, n_iter = 
 #' model <- run_diffusion_sparse(data, k_neighbors = 20, oversampling = 10, n_iter = 200)
 #'
 #' @export
-run_diffusion_sparse <- function(data, k = 2, k_neighbors = 15, oversampling = 10, n_iter = 200) {
+run_diffusion_sparse <- function(data, dims = 2, k_neighbors = 20, oversampling = 10, n_iter = 300) {
 
     if (!is.matrix(data) && !is.data.frame(data)) {
         stop("'data' must be a numeric matrix or a data.frame.")
@@ -124,13 +123,13 @@ run_diffusion_sparse <- function(data, k = 2, k_neighbors = 15, oversampling = 1
     if (anyNA(data_matrix)) stop("'data' cannot contain NA or NaN values.")
     if (max(data_matrix) == Inf || min(data_matrix) == -Inf) stop("'data' cannot contain Infinite values.")
     
-    m <- as.integer(k + oversampling)
+    m <- as.integer(dims + oversampling)
 
     if (m >= N) {
-        warning("WARNING: Overall number of computed dimensions (k + oversampling) is higher than N. Reducing oversampling.")
+        warning("WARNING: Overall number of computed dimensions (dims + oversampling) is higher than N. Reducing oversampling.")
         m <- as.integer(N - 1)
-        if (m <= k) stop("WARNING: N is too small to compute k dimensions.")
     }
+    if (m <= dims) stop("WARNING: N is too small to compute dims dimensions.")
     
     res <- .Call("c_run_sparse_diffusion", data_matrix, 
                  as.integer(k_neighbors), m, as.integer(n_iter), PACKAGE="cDiffusion")
@@ -141,11 +140,11 @@ run_diffusion_sparse <- function(data, k = 2, k_neighbors = 15, oversampling = 1
     sorted_vectors <- res$vectors[, idx]
     
     # first vector is trivial so its useless
-    diff_coords <- sorted_vectors[, 2:(k+1)]
-    diff_vals <- sorted_values[2:(k+1)]
+    diff_coords <- sorted_vectors[, 2:(dims+1), drop = FALSE]
+    diff_vals <- sorted_values[2:(dims+1), drop = FALSE] - 1.0
     
     # diffusion map embedding
-    for(i in 1:k) {
+    for(i in 1:dims) {
         diff_coords[, i] <- diff_coords[, i] * diff_vals[i]
     }
     

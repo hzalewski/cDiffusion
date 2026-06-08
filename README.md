@@ -2,8 +2,7 @@
 
 [![R-CMD-check](https://github.com/hzalewski/cDiffusion/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/hzalewski/cDiffusion/actions/workflows/R-CMD-check.yaml)
 
-`cDiffusion` is a high-performance R package for non-linear dimensionality reduction and manifold learning via Diffusion Maps. Written using R C API, it provides a fast and memory-efficient way to compute diffusion maps for moderately large datasets.
-This package offers both a classic dense method for small-scale analytics and a highly optimized sparse implementation designed to scale with larger data.
+`cDiffusion` is a high-performance R package for non-linear dimensionality reduction and manifold learning via Diffusion Maps. Written using R C API, it provides a fast and memory-efficient way to compute diffusion maps for moderately large datasets. This package offers both a classic dense method for small-scale analytics and a highly optimized sparse implementation designed to scale with larger data.
 
 ## Key Features
 

@@ -6,22 +6,22 @@
 \usage{
 run_diffusion_sparse(
   data,
-  k = 2,
-  k_neighbors = 15,
+  dims = 2,
+  k_neighbors = 20,
   oversampling = 10,
-  n_iter = 200
+  n_iter = 300
 )
 }
 \arguments{
 \item{data}{Numeric matrix or data.frame.}
 
-\item{k}{Integer. Number of diffusion dimensions to return (default 2).}
+\item{dims}{Integer. Number of diffusion dimensions to return (default 2).}
 
-\item{k_neighbors}{Integer. Number of nearest neighbors for sparse method (default 15).}
+\item{k_neighbors}{Integer. Number of nearest neighbors for sparse method (default 20).}
 
 \item{oversampling}{Integer. Dimensions added for stability in randomized SVD algorithm (default 10). Higher values may negatively impact results of thr algorithm.}
 
-\item{n_iter}{Integer. Number of subspace iterations in randomized SVD algorithm (default 200).}
+\item{n_iter}{Integer. Number of subspace iterations in randomized SVD algorithm (default 300).}
 }
 \value{
 A diffmap object

@@ -3,6 +3,8 @@
 SEXP c_run_diffusion(SEXP r_data, SEXP r_sigma, SEXP r_m, SEXP r_n_iter)
 {
 
+    // right now dim isnt the same as dims in diffusion.R
+
     if (!Rf_isReal(r_data))
         Rf_error("data must be numeric");
     if (!Rf_isMatrix(r_data))
@@ -47,15 +49,16 @@ SEXP c_run_diffusion(SEXP r_data, SEXP r_sigma, SEXP r_m, SEXP r_n_iter)
     SEXP r_eigvecs = PROTECT(Rf_allocMatrix(REALSXP, n, m));
     double *eigvecs = REAL(r_eigvecs);
 
-    double *X = malloc(n * m * sizeof(double));
+    double *X = R_Calloc(n * m, double);
     random_matrix(X, n, m);
     randomized_svd(dist, X, eigvecs, REAL(r_eigvals), n, m, n_iter);
-    free(X);
+    R_Free(X);
 
-// Rescale eigenvectors using inverse of degree matrix
+    // Rescale eigenvectors using inverse of degree matrix
 #pragma omp parallel for
     for (int j = 0; j < m; j++)
     {
+
         for (int i = 0; i < n; i++)
             eigvecs[i + j * n] /= D_sqrt[i];
     }
@@ -121,12 +124,13 @@ SEXP c_run_sparse_diffusion(SEXP r_data, SEXP r_k_neighbors, SEXP r_m, SEXP r_n_
 
     sparse_normalization(csr_data, csr_indices, csr_indptr, D_sqrt, n);
 
-    double *X = malloc(n * m * sizeof(double));
+    double *X = R_Calloc(n * m, double);
     random_matrix(X, n, m);
 
     sparse_rsvd(csr_data, csr_indices, csr_indptr, X, eigvecs, REAL(r_eigvals), n, m, n_iter);
 
-// Re-scale eigenvectors using inverse of degree matrix
+    // Re-scale eigenvectors using inverse of degree matrix
+
 #pragma omp parallel for
     for (int j = 0; j < m; j++)
     {
@@ -134,10 +138,10 @@ SEXP c_run_sparse_diffusion(SEXP r_data, SEXP r_k_neighbors, SEXP r_m, SEXP r_n_
             eigvecs[i + j * n] /= D_sqrt[i];
     }
 
-    free(csr_data);
-    free(csr_indices);
-    free(csr_indptr);
-    free(X);
+    R_Free(csr_data);
+    R_Free(csr_indices);
+    R_Free(csr_indptr);
+    R_Free(X);
 
     SEXP r_list = PROTECT(Rf_allocVector(VECSXP, 2));
     SET_VECTOR_ELT(r_list, 0, r_eigvals);
