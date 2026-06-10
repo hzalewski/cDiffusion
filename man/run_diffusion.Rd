@@ -4,10 +4,10 @@
 \alias{run_diffusion}
 \title{Run diffusion map}
 \usage{
-run_diffusion(data, sigma = 1, dims = 2, oversampling = 20, n_iter = 10)
+run_diffusion(data, sigma = 1, dims = 2, oversampling = 10, n_iter = 10)
 }
 \arguments{
-\item{data}{Numeric matrix or data.frame.}
+\item{data}{Numeric matrix or data.frame. Missing values (NA) and infinite values are not supported and will cause an error.}
 
 \item{sigma}{Numeric. Bandwidth for Gaussian kernel (default 1.0).}
 
@@ -26,7 +26,7 @@ Best suited for smaller datasets where calculating the full N x N distance
 matrix fits safely into memory.
 }
 \examples{
-data <- matrix(runif(100), nrow = 20, ncol = 5)
+data <- matrix(runif(1000), nrow = 50, ncol = 20)
 optimal_sigma <- estimate_sigma(data)
 model <- run_diffusion(data, sigma = optimal_sigma)
 

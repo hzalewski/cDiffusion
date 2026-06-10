@@ -5,11 +5,8 @@ Version: 0.1.0
 Date: 2026-06-05
 Authors@R: c(person("Hubert", "Zalewski", role = c("aut", "cre"),
                     email = "Hubert.Zalewski2.stud@pw.edu.pl"))
-Description: Implements memory-efficient, non-linear dimensionality reduction 
-    using Diffusion Maps. Features an automated engine dispatch that dynamically 
-    switches between dense exact evaluations for small datasets and a highly 
-    optimized, multi-threaded C-engine using Max-Heaps and randomized Singular 
-    Value Decomposition (rSVD) for large-scale data.
+Description: Implements memory-efficient and highly optimized non-linear dimensionality reduction 
+    using Diffusion Maps. 
 License: MIT + file LICENSE
 Encoding: UTF-8
 Depends: 
@@ -19,3 +16,4 @@ Imports:
 Suggests: 
     tinytest
 Config/roxygen2/version: 8.0.0
+

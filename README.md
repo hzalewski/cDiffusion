@@ -1,10 +1,16 @@
 # cDiffusion
 
-[![R-CMD-check](https://github.com/hzalewski/cDiffusion/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/hzalewski/cDiffusion/actions/workflows/R-CMD-check.yaml)
 
 `cDiffusion` is a high-performance R package for non-linear dimensionality reduction and manifold learning via Diffusion Maps. Written using R C API, it provides a fast and memory-efficient way to compute diffusion maps for moderately large datasets. This package offers both a classic dense method for small-scale analytics and a highly optimized sparse implementation designed to scale with larger data.
 
-## Key Features
+
+## Documentation
+
+For API reference, performance benchmarks, and package overview, please visit the official package website:
+
+**[cDiffusion Documentation Website](https://hzalewski.github.io/cDiffusion/)**
+
+## Package Features
 
 * **Two Approaches:** Provides a dense matrix solver for exact computation on smaller datasets, and a sparse solver for heavier workloads.
 * **Optimized Memory Usage:** The sparse implementation eliminates the need to allocate full $N \times N$ distance matrices. It computes an exact k-nearest neighbors graph on the fly using a max-heap structure and stores the transition graph in Compressed Sparse Row (CSR) format, reducing memory complexity to $\mathcal{O}(N \cdot k\_neighbors)$.
@@ -30,6 +36,7 @@ remotes::install_github("hzalewski/cDiffusion")
 2. **`run_diffusion_sparse()`**: The sparse solver. Bypasses the need to allocate dense $N \times N$ euclidean distance matrix by taking only k - nearest neighbours for each point and converting those distances into Compressed Sparse Row (CSR) format. 
 3. **`estimate_sigma()`**: Computes the global Gaussian kernel width ($\sigma$) using the Median Heuristic by subsampling of the entry data.
 4. **`cdiff_kmeans()`**: Spectral Clustering function. It applies K-means to the diffusion coordinates and features an Eigengap Heuristic for automatic detection of the optimal number of clusters.
+
 ### 1. Dense Method
 
 
@@ -110,7 +117,3 @@ str(model_sparse)
 #>  $ method     : chr "sparse"
 #>  - attr(*, "class")= chr "diffmap"
 ```
-
-## Which Method to Choose?
-* **Dense (`run_diffusion`)**: Use for small/medium datasets ($N < 10,000$) where preserving exact global distances is critical.
-* **Sparse (`run_diffusion_sparse`)**: Use for large datasets ($N \ge 10,000$) to save RAM, or when data has varying densities and complex non-linear manifolds.

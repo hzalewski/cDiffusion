@@ -13,7 +13,7 @@ run_diffusion_sparse(
 )
 }
 \arguments{
-\item{data}{Numeric matrix or data.frame.}
+\item{data}{Numeric matrix or data.frame. Missing values (NA) and infinite values are not supported and will cause an error.}
 
 \item{dims}{Integer. Number of diffusion dimensions to return (default 2).}
 

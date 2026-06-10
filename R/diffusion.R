@@ -8,7 +8,7 @@
 #' Best suited for smaller datasets where calculating the full N x N distance 
 #' matrix fits safely into memory.
 #'
-#' @param data Numeric matrix or data.frame.
+#' @param data Numeric matrix or data.frame. Missing values (NA) and infinite values are not supported and will cause an error.
 #' @param sigma Numeric. Bandwidth for Gaussian kernel (default 1.0).
 #' @param dims Integer. Number of diffusion dimensions to return (default 2).
 #' @param oversampling Integer. Dimensions added for stability in randomized SVD algorithm (default 10). Higher values may negatively impact results of thr algorithm.
@@ -17,7 +17,7 @@
 #' @return A diffmap object
 #' 
 #' @examples
-#' data <- matrix(runif(100), nrow = 20, ncol = 5)
+#' data <- matrix(runif(1000), nrow = 50, ncol = 20)
 #' optimal_sigma <- estimate_sigma(data)
 #' model <- run_diffusion(data, sigma = optimal_sigma)
 #'
@@ -25,7 +25,7 @@
 #' 
 #' 
 
-run_diffusion <- function(data, sigma = 1.0, dims = 2, oversampling = 20, n_iter = 10) {
+run_diffusion <- function(data, sigma = 1.0, dims = 2, oversampling = 10, n_iter = 10) {
 
 
 
@@ -96,7 +96,7 @@ run_diffusion <- function(data, sigma = 1.0, dims = 2, oversampling = 20, n_iter
 #' usage scales linearly rather than quadratically.
 #' Uses an adaptive Gaussian kernel (local sigma based on the distance to the k-th nearest neighbor).
 #'
-#' @param data Numeric matrix or data.frame.
+#' @param data Numeric matrix or data.frame. Missing values (NA) and infinite values are not supported and will cause an error.
 #' @param dims Integer. Number of diffusion dimensions to return (default 2).
 #' @param k_neighbors Integer. Number of nearest neighbors for sparse method (default 20).
 #' @param oversampling Integer. Dimensions added for stability in randomized SVD algorithm (default 10). Higher values may negatively impact results of thr algorithm.
