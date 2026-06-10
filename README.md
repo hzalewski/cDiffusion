@@ -13,7 +13,7 @@ For API reference, performance benchmarks, and package overview, please visit th
 ## Package Features
 
 * **Two Approaches:** Provides a dense matrix solver for exact computation on smaller datasets, and a sparse solver for heavier workloads.
-* **Optimized Memory Usage:** The sparse implementation eliminates the need to allocate full $N \times N$ distance matrices. It computes an exact k-nearest neighbors graph on the fly using a max-heap structure and stores the transition graph in Compressed Sparse Row (CSR) format, reducing memory complexity to $\mathcal{O}(N \cdot k\_neighbors)$.
+* **Optimized Memory Usage:** The sparse implementation eliminates the need to allocate full $N \times N$ distance matrices. It computes an exact k-nearest neighbors graph on the fly using a max-heap structure and stores the transition graph in Compressed Sparse Row (CSR) format, reducing memory complexity to $\mathcal{O}(N \cdot kneighbors)$.
 * **rSVD solver:** Eigen-decompositions on matrices are done via custom Randomized Singular Value Decomposition (rSVD) solver. Most heavy computations are multithreaded with the use of OpenMP. Only then LAPACK finds eigenvectors for a small $m \times m$ matrix where $m$ is the requested number of dimensions.
 * **Straightforwards Design:** Zero external dependencies. The codebase relies strictly on the native R C API (including LAPACK/BLAS), OpenMP, and the base R `stats` package, ensuring straightforward compilation.
 
