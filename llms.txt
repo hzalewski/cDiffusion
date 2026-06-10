@@ -25,7 +25,7 @@ Website](https://hzalewski.github.io/cDiffusion/)**
   need to allocate full $`N \times N`$ distance matrices. It computes an
   exact k-nearest neighbors graph on the fly using a max-heap structure
   and stores the transition graph in Compressed Sparse Row (CSR) format,
-  reducing memory complexity to $`\mathcal{O}(N \cdot k\_neighbors)`$.
+  reducing memory complexity to $`\mathcal{O}(N \cdot kneighbors)`$.
 - **rSVD solver:** Eigen-decompositions on matrices are done via custom
   Randomized Singular Value Decomposition (rSVD) solver. Most heavy
   computations are multithreaded with the use of OpenMP. Only then
