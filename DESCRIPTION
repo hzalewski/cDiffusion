@@ -16,4 +16,4 @@ Imports:
 Suggests: 
     tinytest
 Config/roxygen2/version: 8.0.0
-
+URL: https://hzalewski.github.io/cDiffusion/

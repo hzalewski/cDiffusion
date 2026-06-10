@@ -1,29 +1,33 @@
-url: ~
+url: https://hzalewski.github.io/cDiffusion/
 template:
   bootstrap: 5
-
 navbar:
   structure:
-    left: [articles, reference]
-    right: [search, github]
+    left:
+    - articles
+    - reference
+    right:
+    - search
+    - github
   components:
     articles:
-      text: "Articles"
+      text: Articles
       menu:
-        - text: "Overview of cDiffusion"
-          href: overview.html
-        - text: "Performance Benchmarks"
-          href: performance.html
-
+      - text: Overview of cDiffusion
+        href: overview.html
+      - text: Performance Benchmarks
+        href: performance.html
 reference:
-  - title: "Functions"
-    contents:
-      - run_diffusion
-      - run_diffusion_sparse
-      - estimate_sigma
-      - cdiff_kmeans
-
+- title: Functions
+  contents:
+  - run_diffusion
+  - run_diffusion_sparse
+  - estimate_sigma
+  - cdiff_kmeans
 home:
   sidebar:
-    structure: [links, license, authors]
+    structure:
+    - links
+    - license
+    - authors
 
